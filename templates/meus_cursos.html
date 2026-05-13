@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Meus Cursos{% endblock %}
+{% block topbar_title %}Meus Cursos{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <h2 class="section-title">Meus Cursos</h2>
+  {% if cursos %}
+    <span class="badge badge-success">{{ cursos|length }} matriculado{% if cursos|length != 1 %}s{% endif %}</span>
+  {% endif %}
+</div>
+
+{% if cursos %}
+<div class="grid">
+  {% for c in cursos %}
+  <div class="card">
+    <div class="card-img-wrap">
+      <img src="{{ c.imagem }}" alt="{{ c.titulo }}">
+      <div class="card-tag">{{ c.categoria }}</div>
+    </div>
+    <div class="card-body">
+      <h3>{{ c.titulo }}</h3>
+      <p>{{ c.descricao }}</p>
+      <div class="card-meta">
+        <span>⏱ {{ c.duracao }}</span>
+        <span>📹 {{ c.aulas }} aulas</span>
+      </div>
+      <div class="card-actions">
+        <a href="/curso/{{ c.id }}/" class="btn btn-primary btn-sm" style="flex:1">▶ Continuar</a>
+        <a href="/curso/{{ c.id }}/remover/" class="btn btn-danger btn-sm">✕</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📭</div>
+  <h3>Nenhum curso ainda</h3>
+  <p>Você ainda não adicionou nenhum curso à sua lista. Explore nossa plataforma e comece a aprender!</p>
+  <a href="/" class="btn btn-primary btn-lg">🔍 Explorar Cursos</a>
+</div>
+{% endif %}
+{% endblock %}

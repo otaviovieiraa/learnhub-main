@@ -1,0 +1,40 @@
+# Development Dockerfile with hot reload
+FROM python:3.11-alpine
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=3000
+
+# Install dependencies
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    postgresql-dev \
+    curl
+
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+WORKDIR /app
+
+# Copy requirements
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY --chown=appuser:appuser . .
+
+# Create static directory
+RUN mkdir -p staticfiles && \
+    chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+EXPOSE ${PORT}
+
+# Development server (will be overridden by docker-compose command)
+CMD ["python", "manage.py", "runserver", "0.0.0.0:3000"]
