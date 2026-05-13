@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if user %}
+<div class="hero">
+  <h1>Olá, <span>{{ user.nome }}!</span> 👋</h1>
+  <p>Continue de onde parou ou explore novos cursos para acelerar sua carreira.</p>
+  <div class="hero-buttons">
+    <a href="/meus-cursos/" class="btn btn-primary btn-lg">📚 Meus Cursos</a>
+    <a href="#cursos" class="btn btn-secondary btn-lg">Explorar Cursos</a>
+  </div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-label">Cursos Matriculados</div>
+    <div class="stat-value" style="color:var(--accent)">{{ enrolled|length }}</div>
+    <div class="stat-desc">de {{ cursos|length }} disponíveis</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total de Cursos</div>
+    <div class="stat-value" style="color:var(--accent2)">{{ cursos|length }}</div>
+    <div class="stat-desc">na plataforma</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Horas de Conteúdo</div>
+    <div class="stat-value" style="color:var(--accent3)">203h</div>
+    <div class="stat-desc">disponíveis para você</div>
+  </div>
+</div>
+
+{% else %}
+<div class="hero">
+  <h1>Aprenda com os <span>melhores cursos</span> de tecnologia</h1>
+  <p>Crie sua conta gratuitamente e tenha acesso a dezenas de cursos premium. Comece sua jornada hoje.</p>
+  <div class="hero-buttons">
+    <a href="/cadastro/" class="btn btn-primary btn-lg">🚀 Começar Grátis</a>
+    <a href="/login/" class="btn btn-secondary btn-lg">Já tenho conta</a>
+  </div>
+</div>
+{% endif %}
+
+<div id="cursos">
+  <div class="section-header">
+    <h2 class="section-title">Todos os Cursos</h2>
+    <span class="badge badge-accent">{{ cursos|length }} cursos</span>
+  </div>
+
+  <div class="grid">
+    {% for c in cursos %}
+    <div class="card">
+      <div class="card-img-wrap">
+        <img src="{{ c.imagem }}" alt="{{ c.titulo }}">
+        <div class="card-tag">{{ c.categoria }}</div>
+      </div>
+      <div class="card-body">
+        <h3>{{ c.titulo }}</h3>
+        <p>{{ c.descricao }}</p>
+        <div class="card-meta">
+          <span>⏱ {{ c.duracao }}</span>
+          <span>📹 {{ c.aulas }} aulas</span>
+          <span>📊 {{ c.nivel }}</span>
+        </div>
+        <div class="card-actions">
+          {% if user %}
+            <a href="/curso/{{ c.id }}/" class="btn btn-primary btn-sm" style="flex:1">
+              {% if c.id in enrolled %}▶ Continuar{% else %}👁 Ver Curso{% endif %}
+            </a>
+            {% if c.id not in enrolled %}
+              <a href="/curso/{{ c.id }}/adicionar/" class="btn btn-success btn-sm">+ Adicionar</a>
+            {% endif %}
+          {% else %}
+            <a href="/login/" class="btn btn-secondary btn-sm" style="flex:1">🔒 Faça login para acessar</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

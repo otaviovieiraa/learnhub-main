@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: learnhub_postgres_dev
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./scripts/healthcheck-postgres.sh:/healthcheck.sh
+    healthcheck:
+      test: ["CMD", "sh", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - learnhub_network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: learnhub_web_dev
+    command: python manage.py runserver 0.0.0.0:3000
+    environment:
+      - DEBUG=True
+      - DATABASE_ENGINE=${DATABASE_ENGINE}
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=${DATABASE_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=localhost,127.0.0.1
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - learnhub_network
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data_dev:
+    driver: local
+
+networks:
+  learnhub_network:
+    driver: bridge

@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="{% static 'style.css' %}">
+<title>Criar Conta — LearnHub</title>
+</head>
+<body style="display:block">
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="icon-big">🚀</div>
+      <h2>Crie sua conta</h2>
+      <p>Comece a aprender gratuitamente hoje</p>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+      {% for msg in messages %}
+        <div class="alert {% if 'error' in msg.tags %}alert-error{% else %}alert-success{% endif %}">{{ msg }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-group">
+        <label class="form-label">Nome completo</label>
+        <input type="text" name="nome" class="form-control" placeholder="Seu nome" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input type="password" name="senha" class="form-control" placeholder="Mínimo 6 caracteres" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">Criar Conta →</button>
+    </form>
+
+    <div class="divider">já tem conta?</div>
+
+    <a href="/login/" class="btn btn-secondary btn-block">Fazer login</a>
+
+    <div class="auth-link">
+      <a href="/">← Voltar para o início</a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
