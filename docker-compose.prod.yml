@@ -23,6 +23,7 @@ services:
       - no-new-privileges:true
 
   web:
+    build: .
     image: learnhub:latest
     container_name: learnhub_web_prod
     environment:
