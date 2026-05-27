@@ -80,7 +80,7 @@ services:
 volumes:
   postgres_data_prod:
     driver: local
-  staticfiles:
+  staticfiles_prod:
     driver: local
 
 networks:
