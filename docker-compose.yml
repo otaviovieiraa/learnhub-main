@@ -5,9 +5,9 @@ services:
     image: postgres:15-alpine
     container_name: learnhub_postgres_dev
     environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME:-learnhub_db}
+      POSTGRES_USER: ${DATABASE_USER:-learnhub_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres_secure_password_here}
     ports:
       - "5432:5432"
     volumes:
@@ -29,13 +29,13 @@ services:
     command: python manage.py runserver 0.0.0.0:3000
     environment:
       - DEBUG=True
-      - DATABASE_ENGINE=${DATABASE_ENGINE}
-      - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_ENGINE=${DATABASE_ENGINE:-django.db.backends.postgresql}
+      - DATABASE_NAME=${DATABASE_NAME:-learnhub_db}
+      - DATABASE_USER=${DATABASE_USER:-learnhub_user}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres_secure_password_here}
       - DATABASE_HOST=postgres
-      - DATABASE_PORT=${DATABASE_PORT}
-      - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - SECRET_KEY=${SECRET_KEY:-dev-secret-key-change-in-prod}
       - ALLOWED_HOSTS=localhost,127.0.0.1
     ports:
       - "3000:3000"

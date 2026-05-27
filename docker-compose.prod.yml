@@ -5,11 +5,11 @@ services:
     image: postgres:15-alpine
     container_name: learnhub_postgres_prod
     environment:
-      POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_USER: ${DATABASE_USER}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME:-learnhub_db}
+      POSTGRES_USER: ${DATABASE_USER:-learnhub_user}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres_secure_password_here}
     ports:
-      - "${HOST_POSTGRES_PORT}:5432"
+      - "${HOST_POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
       - ./scripts/healthcheck-postgres.sh:/healthcheck.sh
@@ -30,17 +30,17 @@ services:
     container_name: learnhub_web_prod
     environment:
       - DEBUG=False
-      - PORT=${APP_PORT}
-      - DATABASE_ENGINE=${DATABASE_ENGINE}
-      - DATABASE_NAME=${DATABASE_NAME}
-      - DATABASE_USER=${DATABASE_USER}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - PORT=${APP_PORT:-3000}
+      - DATABASE_ENGINE=${DATABASE_ENGINE:-django.db.backends.postgresql}
+      - DATABASE_NAME=${DATABASE_NAME:-learnhub_db}
+      - DATABASE_USER=${DATABASE_USER:-learnhub_user}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres_secure_password_here}
       - DATABASE_HOST=postgres
-      - DATABASE_PORT=${DATABASE_PORT}
-      - SECRET_KEY=${SECRET_KEY}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DATABASE_PORT=${DATABASE_PORT:-5432}
+      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
     ports:
-      - "${HOST_WEB_PORT_PROD}:${APP_PORT}"
+      - "${HOST_WEB_PORT_PROD:-3010}:${APP_PORT:-3000}"
     depends_on:
       postgres:
         condition: service_healthy
