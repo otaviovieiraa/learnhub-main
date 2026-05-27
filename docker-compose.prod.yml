@@ -50,6 +50,8 @@ services:
     build: .
     image: learnhub:latest
     container_name: learnhub_web_prod
+    ports:
+      - "${HOST_WEB_PORT_PROD:-3010}:${APP_PORT:-3010}"
     environment:
       - DEBUG=False
       - PORT=${APP_PORT:-3000}
