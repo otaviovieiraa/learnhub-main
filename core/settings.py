@@ -56,6 +56,7 @@ TEMPLATES=[{
 }]
 
 STATIC_URL='/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS=['static']
 
 SESSION_ENGINE='django.contrib.sessions.backends.signed_cookies'

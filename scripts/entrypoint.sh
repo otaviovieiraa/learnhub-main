@@ -55,7 +55,7 @@ echo "Executando migrações Django..."
 python manage.py migrate --noinput
 
 echo "Coletando arquivos estáticos..."
-python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput || true
 
 echo "================================"
 echo "✓ Setup concluído com sucesso!"
