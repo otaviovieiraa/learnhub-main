@@ -12,11 +12,6 @@ services:
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
       - ./scripts/healthcheck-postgres.sh:/healthcheck.sh
-    healthcheck:
-      test: ["CMD", "sh", "/healthcheck.sh"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     restart: unless-stopped
     networks:
       - learnhub_network
