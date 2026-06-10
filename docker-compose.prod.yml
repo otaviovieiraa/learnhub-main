@@ -28,7 +28,7 @@ services:
     image: learnhub:latest
     container_name: learnhub_web_prod
     ports:
-      - "${HOST_WEB_PORT_PROD:-3000}:3000"
+      - "3010:3000"
     environment:
       - DEBUG=False
       - PYTHONUNBUFFERED=1
