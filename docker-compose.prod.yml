@@ -1,35 +1,12 @@
-version: '3.9'
-
 services:
-  nginx:
-    image: nginx:alpine
-    container_name: learnhub_nginx_prod
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
-      - staticfiles_prod:/app/staticfiles:ro
-    depends_on:
-      - web
-    networks:
-      - learnhub_network
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   postgres:
     image: postgres:15-alpine
     container_name: learnhub_postgres_prod
     environment:
-      POSTGRES_DB: ${DATABASE_NAME:-learnhub_db}
-      POSTGRES_USER: ${DATABASE_USER:-learnhub_user}
-      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres_secure_password_here}
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_INITDB_ARGS: -U ${DATABASE_USER}
     ports:
       - "${HOST_POSTGRES_PORT:-5432}:5432"
     volumes:
@@ -51,18 +28,19 @@ services:
     image: learnhub:latest
     container_name: learnhub_web_prod
     ports:
-      - "${HOST_WEB_PORT_PROD:-3010}:${APP_PORT:-3010}"
+      - "${HOST_WEB_PORT_PROD:-3000}:3000"
     environment:
       - DEBUG=False
-      - PORT=${APP_PORT:-3000}
-      - DATABASE_ENGINE=${DATABASE_ENGINE:-django.db.backends.postgresql}
-      - DATABASE_NAME=${DATABASE_NAME:-learnhub_db}
-      - DATABASE_USER=${DATABASE_USER:-learnhub_user}
-      - DATABASE_PASSWORD=${DATABASE_PASSWORD:-postgres_secure_password_here}
+      - PYTHONUNBUFFERED=1
+      - DJANGO_SETTINGS_MODULE=core.settings
+      - DATABASE_ENGINE=django.db.backends.postgresql
+      - DATABASE_NAME=${DATABASE_NAME}
+      - DATABASE_USER=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_HOST=postgres
-      - DATABASE_PORT=${DATABASE_PORT:-5432}
-      - SECRET_KEY=${SECRET_KEY:-your-super-secret-key}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - DATABASE_PORT=5432
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
     depends_on:
       postgres:
         condition: service_healthy
@@ -72,17 +50,14 @@ services:
     security_opt:
       - no-new-privileges:true
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/health/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health/"]
       interval: 30s
       timeout: 10s
       retries: 3
-    volumes:
-      - staticfiles_prod:/app/staticfiles
+      start_period: 40s
 
 volumes:
   postgres_data_prod:
-    driver: local
-  staticfiles_prod:
     driver: local
 
 networks:
