@@ -5,7 +5,7 @@
 USER=${POSTGRES_USER:-postgres}
 
 # Check if PostgreSQL is accepting connections
-pg_isready -h localhost -p 5432 -U "$USER" > /dev/null 2>&1
+pg_isready -h localhost -p 5432 -d ${DATABASE_NAME} -U "$USER" > /dev/null 2>&1
 
 if [ $? -eq 0 ]; then
     echo "PostgreSQL is healthy"
