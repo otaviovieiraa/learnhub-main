@@ -57,6 +57,19 @@ python manage.py migrate --noinput
 echo "Coletando arquivos estáticos..."
 python manage.py collectstatic --noinput || true
 
+echo "Populando banco de dados com cursos de exemplo..."
+python manage.py populate_db || true
+
+echo "Criando superuser padrão..."
+python manage.py shell << EOF
+from django.contrib.auth.models import User
+if not User.objects.filter(username='admin').exists():
+    User.objects.create_superuser('admin', 'admin@learnhub.com', 'admin123')
+    print("✓ Superuser 'admin' criado com sucesso!")
+else:
+    print("⚠ Superuser 'admin' já existe")
+EOF
+
 echo "================================"
 echo "✓ Setup concluído com sucesso!"
 echo "Iniciando Gunicorn..."

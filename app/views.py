@@ -1,93 +1,248 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+import json
 
-# Simulated DB
-cursos = [
-    {"id":1,"titulo":"Python","descricao":"Do zero ao avançado. Aprenda a linguagem mais versátil do mercado com projetos reais.","imagem":"https://images.unsplash.com/photo-1526379095098-d400fd0bf935?w=600&q=80","categoria":"Back-end","nivel":"Iniciante","duracao":"40h","aulas":80},
-    {"id":2,"titulo":"React","descricao":"Frontend moderno com hooks, context API e integração com APIs REST.","imagem":"https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&q=80","categoria":"Front-end","nivel":"Intermediário","duracao":"30h","aulas":60},
-    {"id":3,"titulo":"Django","descricao":"Backend completo com autenticação, REST API e deploy em produção.","imagem":"https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&q=80","categoria":"Back-end","nivel":"Intermediário","duracao":"35h","aulas":70},
-    {"id":4,"titulo":"Machine Learning","descricao":"Algoritmos, scikit-learn, redes neurais e projetos com dados reais.","imagem":"https://images.unsplash.com/photo-1677442135703-1787eea5ce01?w=600&q=80","categoria":"IA & Data","nivel":"Avançado","duracao":"50h","aulas":100},
-    {"id":5,"titulo":"TypeScript","descricao":"JavaScript com tipagem estática. Código mais robusto e produtivo.","imagem":"https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=600&q=80","categoria":"Front-end","nivel":"Iniciante","duracao":"20h","aulas":40},
-    {"id":6,"titulo":"Docker & DevOps","descricao":"Containers, CI/CD, Kubernetes e deploy em cloud.","imagem":"https://images.unsplash.com/photo-1605745341112-85968b19335b?w=600&q=80","categoria":"DevOps","nivel":"Avançado","duracao":"28h","aulas":55},
-]
+from .models import Course, Lesson, UserEnrollment, LessonProgress
 
-def get_user(request):
-    return request.session.get('user')
 
 def home(request):
-    user = get_user(request)
-    enrolled = request.session.get('enrolled', [])
-    return render(request, 'home.html', {"cursos": cursos, "user": user, "enrolled": enrolled})
+    """Página inicial com lista de cursos"""
+    cursos = Course.objects.all()
+    user_enrollments = []
+    
+    if request.user.is_authenticated:
+        user_enrollments = UserEnrollment.objects.filter(usuario=request.user).values_list('curso_id', flat=True)
+    
+    context = {
+        'cursos': cursos,
+        'user_enrollments': list(user_enrollments)
+    }
+    return render(request, 'home.html', context)
+
 
 def curso(request, id):
-    user = get_user(request)
-    if not user:
-        messages.error(request, 'Você precisa estar logado para acessar os cursos.')
-        return redirect('/login/')
-    c = next((x for x in cursos if x["id"] == id), None)
-    enrolled = request.session.get('enrolled', [])
-    is_enrolled = id in enrolled
-    return render(request, 'curso.html', {"curso": c, "user": user, "is_enrolled": is_enrolled})
+    """Detalhes do curso com aulas"""
+    curso = get_object_or_404(Course, id=id)
+    aulas = curso.lessons.all()
+    
+    is_enrolled = False
+    progresso = None
+    
+    if request.user.is_authenticated:
+        enrollment = UserEnrollment.objects.filter(usuario=request.user, curso=curso).first()
+        is_enrolled = enrollment is not None
+        progresso = enrollment.progresso_total() if enrollment else 0
+    
+    context = {
+        'curso': curso,
+        'aulas': aulas,
+        'is_enrolled': is_enrolled,
+        'progresso': progresso,
+        'total_aulas': aulas.count(),
+    }
+    return render(request, 'curso.html', context)
 
+
+@login_required(login_url='/login/')
+def aula(request, curso_id, aula_id):
+    """Página de reprodução de aula com rastreamento de progresso"""
+    curso = get_object_or_404(Course, id=curso_id)
+    aula = get_object_or_404(Lesson, id=aula_id, curso=curso)
+    
+    # Verificar se usuário está inscrito no curso
+    enrollment = get_object_or_404(UserEnrollment, usuario=request.user, curso=curso)
+    
+    # Obter ou criar progresso da aula
+    progress, created = LessonProgress.objects.get_or_create(
+        usuario=request.user,
+        aula=aula
+    )
+    
+    # Obter todas as aulas do curso com seu status de conclusão
+    aulas_curso = curso.lessons.all()
+    aulas_com_progresso = []
+    
+    for a in aulas_curso:
+        prog = LessonProgress.objects.filter(usuario=request.user, aula=a).first()
+        aulas_com_progresso.append({
+            'id': a.id,
+            'titulo': a.titulo,
+            'ordem': a.ordem,
+            'completada': prog.completada if prog else False,
+            'porcentagem': prog.porcentagem_assistida() if prog else 0,
+        })
+    
+    context = {
+        'curso': curso,
+        'aula': aula,
+        'aulas_curso': aulas_com_progresso,
+        'aula_atual': aula.id,
+        'progresso_aula': progress.porcentagem_assistida(),
+        'aula_completa': progress.completada,
+        'proxima_aula': aulas_curso.filter(ordem__gt=aula.ordem).first(),
+        'aula_anterior': aulas_curso.filter(ordem__lt=aula.ordem).last(),
+        'progresso_curso': enrollment.progresso_total(),
+    }
+    
+    return render(request, 'aula.html', context)
+
+
+@login_required(login_url='/login/')
+@require_POST
+def salvar_progresso(request):
+    """API para salvar progresso da aula (chamada via AJAX)"""
+    try:
+        data = json.loads(request.body)
+        aula_id = data.get('aula_id')
+        tempo_assistido = data.get('tempo_assistido', 0)
+        completada = data.get('completada', False)
+        
+        aula = get_object_or_404(Lesson, id=aula_id)
+        
+        progress, created = LessonProgress.objects.get_or_create(
+            usuario=request.user,
+            aula=aula
+        )
+        
+        progress.tempo_assistido = max(progress.tempo_assistido, tempo_assistido)
+        progress.completada = completada
+        progress.save()
+        
+        return JsonResponse({
+            'success': True,
+            'progresso': progress.porcentagem_assistida(),
+            'completada': progress.completada
+        })
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+
+@login_required(login_url='/login/')
 def adicionar_curso(request, id):
-    if not get_user(request):
-        return redirect('/login/')
-    enrolled = request.session.get('enrolled', [])
-    if id not in enrolled:
-        enrolled.append(id)
-        request.session['enrolled'] = enrolled
-        messages.success(request, 'Curso adicionado com sucesso! 🎉')
+    """Inscrever usuário em um curso"""
+    curso = get_object_or_404(Course, id=id)
+    
+    enrollment, created = UserEnrollment.objects.get_or_create(
+        usuario=request.user,
+        curso=curso
+    )
+    
+    if created:
+        messages.success(request, f'Você foi inscrito em "{curso.titulo}" com sucesso! 🎉')
+    else:
+        messages.info(request, f'Você já está inscrito em "{curso.titulo}"')
+    
     return redirect(f'/curso/{id}/')
 
+
+@login_required(login_url='/login/')
 def remover_curso(request, id):
-    if not get_user(request):
-        return redirect('/login/')
-    enrolled = request.session.get('enrolled', [])
-    if id in enrolled:
-        enrolled.remove(id)
-        request.session['enrolled'] = enrolled
-        messages.success(request, 'Curso removido da sua lista.')
+    """Remover inscrição do usuário em um curso"""
+    curso = get_object_or_404(Course, id=id)
+    enrollment = UserEnrollment.objects.filter(usuario=request.user, curso=curso).first()
+    
+    if enrollment:
+        enrollment.delete()
+        messages.success(request, f'Você foi removido de "{curso.titulo}"')
+    
     return redirect('/meus-cursos/')
 
+
+@login_required(login_url='/login/')
+def meus_cursos(request):
+    """Página com cursos inscritos e progresso"""
+    enrollments = UserEnrollment.objects.filter(usuario=request.user).select_related('curso')
+    
+    cursos_com_progresso = []
+    for enrollment in enrollments:
+        cursos_com_progresso.append({
+            'curso': enrollment.curso,
+            'progresso': enrollment.progresso_total(),
+            'aulas_completadas': enrollment.aulas_completadas(),
+            'total_aulas': enrollment.curso.lessons.count(),
+        })
+    
+    context = {
+        'cursos': cursos_com_progresso
+    }
+    return render(request, 'meus_cursos.html', context)
+
+
 def login_view(request):
-    if get_user(request):
+    """Página de login"""
+    if request.user.is_authenticated:
         return redirect('/')
+    
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
-        senha = request.POST.get('senha', '').strip()
-        # Fake auth: qualquer email/senha não vazio
-        if email and senha and '@' in email:
-            nome = email.split('@')[0].capitalize()
-            request.session['user'] = {'nome': nome, 'email': email}
-            messages.success(request, f'Bem-vindo de volta, {nome}! 👋')
-            return redirect('/')
-        else:
-            messages.error(request, 'Email ou senha inválidos.')
-    return render(request, 'login.html', {})
+        email = request.POST.get('email')
+        senha = request.POST.get('senha')
+        
+        try:
+            user = User.objects.get(email=email)
+            user = authenticate(request, username=user.username, password=senha)
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Bem-vindo, {user.first_name or user.username}! 👋')
+                return redirect('/')
+            else:
+                messages.error(request, 'Senha incorreta')
+        except User.DoesNotExist:
+            messages.error(request, 'Email não encontrado')
+    
+    return render(request, 'login.html')
+
 
 def cadastro(request):
-    if get_user(request):
+    """Página de cadastro"""
+    if request.user.is_authenticated:
         return redirect('/')
+    
     if request.method == 'POST':
-        nome = request.POST.get('nome', '').strip()
-        email = request.POST.get('email', '').strip()
-        senha = request.POST.get('senha', '').strip()
-        if nome and email and senha and '@' in email:
-            request.session['user'] = {'nome': nome, 'email': email}
-            messages.success(request, f'Conta criada com sucesso! Bem-vindo, {nome}! 🚀')
-            return redirect('/')
-        else:
-            messages.error(request, 'Preencha todos os campos corretamente.')
-    return render(request, 'cadastro.html', {})
+        nome = request.POST.get('nome', '')
+        email = request.POST.get('email', '')
+        senha = request.POST.get('senha', '')
+        
+        if not all([nome, email, senha]):
+            messages.error(request, 'Preencha todos os campos')
+            return render(request, 'cadastro.html')
+        
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email já cadastrado')
+            return render(request, 'cadastro.html')
+        
+        # Usar parte do email como username
+        username = email.split('@')[0]
+        
+        # Garantir username único
+        counter = 1
+        original_username = username
+        while User.objects.filter(username=username).exists():
+            username = f"{original_username}{counter}"
+            counter += 1
+        
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=senha,
+            first_name=nome
+        )
+        
+        login(request, user)
+        messages.success(request, f'Bem-vindo, {nome}! 🎓')
+        return redirect('/')
+    
+    return render(request, 'cadastro.html')
+
 
 def logout_view(request):
-    request.session.flush()
-    return redirect('/login/')
-
-def meus_cursos(request):
-    user = get_user(request)
-    if not user:
-        return redirect('/login/')
-    enrolled = request.session.get('enrolled', [])
-    meus = [c for c in cursos if c["id"] in enrolled]
-    return render(request, 'meus_cursos.html', {"cursos": meus, "user": user, "enrolled": enrolled})
+    """Logout do usuário"""
+    logout(request)
+    messages.success(request, 'Você foi desconectado com sucesso!')
+    return redirect('/')
