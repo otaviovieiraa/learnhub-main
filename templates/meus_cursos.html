@@ -26,7 +26,7 @@
         <span>📹 {{ c.aulas }} aulas</span>
       </div>
       <div class="card-actions">
-        <a href="/curso/{{ c.id }}/" class="btn btn-primary btn-sm" style="flex:1">▶ Continuar</a>
+      <a href="{% url 'detalhe_curso' c.id %}" class="btn btn-primary btn-sm" style="flex:1">▶ Continuar</a>
         <a href="/curso/{{ c.id }}/remover/" class="btn btn-danger btn-sm">✕</a>
       </div>
     </div>

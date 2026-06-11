@@ -28,7 +28,7 @@ def home(request):
 def curso(request, id):
     """Detalhes do curso com aulas"""
     curso = get_object_or_404(Course, id=id)
-    aulas = curso.lessons.all()
+    aulas = curso.lessons.all().order_by('ordem')
     
     is_enrolled = False
     progresso = None
@@ -64,7 +64,7 @@ def aula(request, curso_id, aula_id):
     )
     
     # Obter todas as aulas do curso com seu status de conclusão
-    aulas_curso = curso.lessons.all()
+    aulas_curso = curso.lessons.all().order_by('ordem')
     aulas_com_progresso = []
     
     for a in aulas_curso:
