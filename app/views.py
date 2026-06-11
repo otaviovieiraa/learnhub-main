@@ -155,17 +155,28 @@ def remover_curso(request, id):
 
 
 @login_required(login_url='/login/')
+@login_required(login_url='/login/')
 def meus_cursos(request):
-    """Página com cursos inscritos e progresso"""
+    """Página com cursos inscritos e progresso corrigida"""
     enrollments = UserEnrollment.objects.filter(usuario=request.user).select_related('curso')
     
     cursos_com_progresso = []
     for enrollment in enrollments:
+        # Busca a contagem de aulas que o usuário marcou como completadas neste curso
+        aulas_completadas_count = LessonProgress.objects.filter(
+            usuario=request.user, 
+            aula__curso=enrollment.curso, 
+            completada=True
+        ).count()
+        
+        # Conta o total de aulas que o curso possui
+        total_aulas = enrollment.curso.lessons.count()
+        
         cursos_com_progresso.append({
             'curso': enrollment.curso,
-            'progresso': enrollment.progresso_total(),
-            'aulas_completadas': enrollment.aulas_completadas(),
-            'total_aulas': enrollment.curso.lessons.count(),
+            'progresso': enrollment.progresso_total() if hasattr(enrollment, 'progresso_total') else 0,
+            'aulas_completadas': aulas_completadas_count,
+            'total_aulas': total_aulas,
         })
     
     context = {

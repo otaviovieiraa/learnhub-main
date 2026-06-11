@@ -15,19 +15,28 @@
   {% for c in cursos %}
   <div class="card">
     <div class="card-img-wrap">
-      <img src="{{ c.imagem }}" alt="{{ c.titulo }}">
-      <div class="card-tag">{{ c.categoria }}</div>
+      <img src="{{ c.curso.imagem }}" alt="{{ c.curso.titulo }}">
+      <div class="card-tag">{{ c.curso.categoria }}</div>
     </div>
     <div class="card-body">
-      <h3>{{ c.titulo }}</h3>
-      <p>{{ c.descricao }}</p>
+      <h3>{{ c.curso.titulo }}</h3>
+      <p>{{ c.curso.descricao }}</p>
+      
+      <div class="progress-container" style="margin: 15px 0; background: rgba(255,255,255,0.1); border-radius: 4px; height: 8px; overflow: hidden;">
+        <div class="progress-bar" style="width: {{ c.progresso }}%; background: var(--accent, #00fff0); height: 100%; transition: width 0.3s ease;"></div>
+      </div>
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px; display: flex; justify-content: space-between;">
+        <span>Progresso: {{ c.progresso }}%</span>
+        <span>{{ c.aulas_completadas }} / {{ c.total_aulas }} aulas</span>
+      </div>
+
       <div class="card-meta">
-        <span>⏱ {{ c.duracao }}</span>
-        <span>📹 {{ c.aulas }} aulas</span>
+        <span>⏱ {{ c.curso.duracao }}</span>
+        <span>📹 {{ c.total_aulas }} aulas</span>
       </div>
       <div class="card-actions">
-      <a href="{% url 'detalhe_curso' c.id %}" class="btn btn-primary btn-sm" style="flex:1">▶ Continuar</a>
-        <a href="/curso/{{ c.id }}/remover/" class="btn btn-danger btn-sm">✕</a>
+        <a href="/curso/{{ c.curso.id }}/" class="btn btn-primary btn-sm" style="flex:1">▶ Continuar</a>
+        <a href="/curso/{{ c.curso.id }}/remover/" class="btn btn-danger btn-sm">✕</a>
       </div>
     </div>
   </div>
