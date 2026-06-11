@@ -9,9 +9,9 @@
 
 <div class="curso-detail">
   <div>
-    <div class="video-wrap">
+<div class="video-wrap">
       {% if aulas %}
-        <iframe src="{{ menu_aula_atual.video_url|default:aulas.0.video_url|replace_youtu_be_se_precisar }}" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        <iframe src="{{ aulas.0.video_url }}" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
       {% else %}
         <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
       {% endif %}
