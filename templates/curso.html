@@ -10,12 +10,33 @@
 <div class="curso-detail">
   <div>
     <div class="video-wrap">
-      <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      {% if aulas %}
+        <iframe src="{{ menu_aula_atual.video_url|default:aulas.0.video_url|replace_youtu_be_se_precisar }}" frameborder="0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+      {% else %}
+        <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" frameborder="0" allowfullscreen></iframe>
+      {% endif %}
     </div>
 
     <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:20px;">
       <h2 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:12px;">Sobre este curso</h2>
       <p style="color:var(--text-muted); line-height:1.8;">{{ curso.descricao }}</p>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:20px;">
+      <h2 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:16px;">Conteúdo do Curso ({{ aulas|length }} aulas)</h2>
+      <div class="lessons-list" style="display: flex; flex-direction: column; gap: 12px;">
+        {% for aula in aulas %}
+          <div style="padding: 14px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong style="color: var(--text);">{{ aula.ordem }} - {{ aula.titulo }}</strong>
+              <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">{{ aula.descricao }}</p>
+            </div>
+            <span style="font-size: 13px; color: var(--text-muted);">⏱ {{ aula.duracao_minutos }} min</span>
+          </div>
+        {% empty %}
+          <p style="color:var(--text-muted);">Nenhuma aula cadastrada para este curso ainda.</p>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
@@ -27,8 +48,7 @@
 
       <ul class="info-list">
         <li>⏱ Duração <strong>{{ curso.duracao }}</strong></li>
-        <li>📹 Aulas <strong>{{ curso.aulas }} aulas</strong></li>
-        <li>📊 Nível <strong>{{ curso.nivel }}</strong></li>
+        <li>📹 Aulas <strong>{{ aulas|length }} aulas</strong></li> <li>📊 Nível <strong>{{ curso.nivel }}</strong></li>
         <li>🌐 Idioma <strong>Português</strong></li>
         <li>♾️ Acesso <strong>Vitalício</strong></li>
       </ul>
