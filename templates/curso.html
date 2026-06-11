@@ -22,17 +22,19 @@
       <p style="color:var(--text-muted); line-height:1.8;">{{ curso.descricao }}</p>
     </div>
 
-    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:20px;">
+<div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:20px;">
       <h2 style="font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:16px;">Conteúdo do Curso ({{ aulas|length }} aulas)</h2>
       <div class="lessons-list" style="display: flex; flex-direction: column; gap: 12px;">
         {% for aula in aulas %}
-          <div style="padding: 14px; background: rgba(255,255,255,0.05); border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-              <strong style="color: var(--text);">{{ aula.ordem }} - {{ aula.titulo }}</strong>
-              <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">{{ aula.descricao }}</p>
+          <a href="/curso/{{ curso.id }}/aula/{{ aula.id }}/" class="lesson-item-link" style="text-decoration: none; color: inherit; display: block;">
+            <div style="padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid transparent; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.08)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='transparent';">
+              <div>
+                <strong style="color: var(--text);">{{ aula.ordem }} - {{ aula.titulo }}</strong>
+                <p style="margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted);">{{ aula.descricao }}</p>
+              </div>
+              <span style="font-size: 13px; color: var(--text-muted); white-space: nowrap; margin-left: 10px;">⏱ {{ aula.duracao_minutos }} min</span>
             </div>
-            <span style="font-size: 13px; color: var(--text-muted);">⏱ {{ aula.duracao_minutos }} min</span>
-          </div>
+          </a>
         {% empty %}
           <p style="color:var(--text-muted);">Nenhuma aula cadastrada para este curso ainda.</p>
         {% endfor %}
@@ -53,13 +55,17 @@
         <li>♾️ Acesso <strong>Vitalício</strong></li>
       </ul>
 
-      {% if is_enrolled %}
+{% if is_enrolled %}
         <div class="enrolled-msg">✅ Você já está matriculado neste curso!</div>
-        <a href="#" class="btn btn-primary btn-block btn-lg">▶ Continuar Assistindo</a>
+        {% if aulas %}
+          <a href="/curso/{{ curso.id }}/aula/{{ aulas.0.id }}/" class="btn btn-primary btn-block btn-lg">▶ Continuar Assistindo</a>
+        {% endif %}
         <a href="/curso/{{ curso.id }}/remover/" class="btn btn-danger btn-block btn-sm" style="margin-top:8px">Remover da minha lista</a>
       {% else %}
         <a href="/curso/{{ curso.id }}/adicionar/" class="btn btn-success btn-block btn-lg">+ Adicionar à Minha Lista</a>
-        <a href="#" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">▶ Assistir Agora</a>
+        {% if aulas %}
+          <a href="/curso/{{ curso.id }}/aula/{{ aulas.0.id }}/" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">▶ Assistir Agora</a>
+        {% endif %}
       {% endif %}
     </div>
   </div>
