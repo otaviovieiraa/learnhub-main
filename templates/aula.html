@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}{{ aula.titulo }} - {{ curso.titulo }}{% endblock %}
+{% block topbar_title %}{{ curso.titulo }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:20px; display: flex; justify-content: space-between; align-items: center;">
+  <a href="/curso/{{ curso.id }}/" class="btn btn-secondary btn-sm">← Voltar para o Curso</a>
+  <span class="badge badge-accent">Progresso do Curso: {{ progresso_curso }}%</span>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start;">
+  
+  <div>
+    <div class="video-wrap" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: var(--radius); border: 1px solid var(--border); background: #000;">
+      <iframe 
+        src="{{ aula.video_url }}" 
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+        frameborder="0" 
+        allowfullscreen 
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-top:20px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+        <h1 style="font-family:'Syne',sans-serif; font-size:22px; font-weight:700; margin: 0;">{{ aula.ordem }} - {{ aula.titulo }}</h1>
+        <span style="font-size: 14px; color: var(--text-muted); white-space: nowrap;">⏱ {{ aula.duracao_minutos }} minutos</span>
+      </div>
+      <p style="color:var(--text-muted); line-height:1.8; margin-bottom: 20px;">{{ aula.descricao }}</p>
+
+      <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 20px;">
+        {% if aula_anterior %}
+          <a href="/curso/{{ curso.id }}/aula/{{ aula_anterior.id }}/" class="btn btn-secondary">◀ Aula Anterior</a>
+        {% else %}
+          <button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">◀ Aula Anterior</button>
+        {% endif %}
+
+        {% if proxima_aula %}
+          <a href="/curso/{{ curso.id }}/aula/{{ proxima_aula.id }}/" class="btn btn-primary">Próxima Aula ▶</a>
+        {% else %}
+          <a href="/meus-cursos/" class="btn btn-success">🎉 Concluir Curso</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:20px; max-height: 80vh; overflow-y: auto;">
+    <h3 style="font-family:'Syne',sans-serif; font-size:16px; font-weight:700; margin-bottom:16px; color: var(--text);">Conteúdo do Curso</h3>
+    
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      {% for a in Corporate_course or aulas_curso %}
+        <a href="/curso/{{ curso.id }}/aula/{{ a.id }}/" style="text-decoration: none; color: inherit; display: block;">
+          <div style="padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px; transition: all 0.2s; 
+            {% if a.id == aula_atual %}
+              background: rgba(0, 255, 240, 0.1); border: 1px solid var(--accent);
+            {% else %}
+              background: rgba(255,255,255,0.02); border: 1px solid transparent;
+            {% endif %}"
+            onmouseover="this.style.background='rgba(255,255,255,0.06)'"
+            onmouseout="this.style.background='{% if a.id == aula_atual %}rgba(0, 255, 240, 0.1){% else %}rgba(255,255,255,0.02){% endif %}'">
+            
+            <div style="font-size: 16px;">
+              {% if a.completada %}
+                <span style="color: var(--success, #22c55e);">✅</span>
+              {% else %}
+                <span style="color: var(--text-muted); opacity: 0.4;">○</span>
+              {% endif %}
+            </div>
+
+            <div style="flex: 1;">
+              <div style="font-size: 13px; font-weight: {% if a.id == aula_atual %}700{% else %}500{% endif %}; color: {% if a.id == aula_atual %}var(--accent){% else %}var(--text){% endif %}; text-overflow: ellipsis; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical;">
+                {{ a.ordem }} - {{ a.titulo }}
+              </div>
+            </div>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
