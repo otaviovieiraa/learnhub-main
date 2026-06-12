@@ -3,7 +3,7 @@
 {% block topbar_title %}Dashboard{% endblock %}
 
 {% block content %}
-{% if user %}
+{% if user.is_authenticated %}
 <div class="hero">
   <h1>Olá, <span>{{ user.nome }}!</span> 👋</h1>
   <p>Continue de onde parou ou explore novos cursos para acelerar sua carreira.</p>

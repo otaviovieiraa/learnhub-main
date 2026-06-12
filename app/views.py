@@ -13,14 +13,15 @@ from .models import Course, Lesson, UserEnrollment, LessonProgress
 def home(request):
     """Página inicial com lista de cursos"""
     cursos = Course.objects.all()
-    user_enrollments = []
+    enrolled = []  # Mudamos o nome aqui para bater com o template
     
     if request.user.is_authenticated:
-        user_enrollments = UserEnrollment.objects.filter(usuario=request.user).values_list('curso_id', flat=True)
+        # Busca os IDs dos cursos em que o usuário está matriculado
+        enrolled = UserEnrollment.objects.filter(usuario=request.user).values_list('curso_id', flat=True)
     
     context = {
         'cursos': cursos,
-        'user_enrollments': list(user_enrollments)
+        'enrolled': list(enrolled)  # Enviando como 'enrolled' para o HTML reconhecer
     }
     return render(request, 'home.html', context)
 
